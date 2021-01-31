@@ -1,22 +1,18 @@
+using CourseLibrary.API.DbContexts;
+using CourseLibrary.API.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace CourseLiabrary.API
+namespace CourseLibrary.API
 {
     public class Startup
     {
-        // Configuration is injected
-        // which allows us to access configuration settings
-        // we could store those settings in appsettings.json
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -25,10 +21,25 @@ namespace CourseLiabrary.API
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        // Service is a component that is inteded for common consumtipon in the app
+
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            // if set to false, API will return respons ein default response format if unsupported media type is requested
+            // By default it's false
+            services.AddControllers(setupAction =>
+            {
+                setupAction.ReturnHttpNotAcceptable = true;
+               // setupAction.OutputFormatters.Add( new XmlDataContractSerializerOutputFormatter());
+
+            }).AddXmlDataContractSerializerFormatters();
+             
+            services.AddScoped<ICourseLibraryRepository, CourseLibraryRepository>();
+
+            services.AddDbContext<CourseLibraryContext>(options =>
+            {
+                options.UseSqlServer(
+                    @"Server=DESKTOP-FOP4HNN\SQLEXPRESS;Database=CourseLibraryDB;Trusted_Connection=True;");
+            }); 
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
